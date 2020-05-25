@@ -9,7 +9,6 @@
 
 namespace MrSuperLi\Tencent\Ads\Parameters;
 
-
 use Doctrine\Common\Collections\ArrayCollection;
 
 class Builder extends ArrayCollection
@@ -20,9 +19,11 @@ class Builder extends ArrayCollection
     /**
      * 工厂函数
      *
+     * @param array|Builder $params
+     *
      * @return Builder
      */
-    public static function make() {
+    public static function make($params = []) {
         if ($params instanceof static) {
             return $params;
         }
@@ -71,6 +72,17 @@ class Builder extends ArrayCollection
         }
 
         return $this;
+    }
+
+    /**
+     * 设置account_id
+     *
+     * @param $account
+     * @return Builder
+     */
+    public function setAccountId($account)
+    {
+        return $this->set('account_id', $account);
     }
 
     public function set($key, $value)
@@ -190,17 +202,18 @@ class Builder extends ArrayCollection
             if (is_object($value) && method_exists($value, 'toArray')) {
                 $results[] = [
                     'name' => $field,
-                    'contents' => $value->toArray(),
+                    'contents' => json_encode($value->toArray()),
                 ];
             } else {
                 if (is_array($value) && isset($value['name']) && isset($value['contents'])) {
-                    $results[] = $value;
-                } else {
-                    $results[] = [
-                        'name' => $field,
-                        'contents' => $value
-                    ];
+                    $field = $value['name'];
+                    $value = $value['contents'];
                 }
+                
+                $results[] = [
+                    'name' => $field,
+                    'contents' => is_array($value) ? json_encode($value) : $value,
+                ];
             }
         }
 
@@ -209,6 +222,8 @@ class Builder extends ArrayCollection
 
     /**
      * 生成普通数组
+     * 
+     * 数组类型的值需要进行json_encode
      *
      * @return array
      */
@@ -216,10 +231,10 @@ class Builder extends ArrayCollection
     {
         return array_map(function ($value) {
             if (is_object($value) && method_exists($value, 'toArray')) {
-                return $value->toArray();
-            } else {
-                return $value;
+                $value = $value->toArray();
             }
+
+            return is_array($value) ? json_encode($value) : $value;
         }, parent::toArray());
     }
 
